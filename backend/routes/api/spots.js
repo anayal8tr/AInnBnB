@@ -163,7 +163,8 @@ router.get('/', async (req, res, next) => {
         for (let spot of spots) {
             const spotBody = spot.toJSON();
             const reviews = await Review.findAll({ where: {spotId:spotBody.id}});
-            const exsistsError = new ErrorHandler("Spot couldn't be found",404);
+            const exsistsError = new Error("Spot couldn't be found");
+            exsistsError.status = 404;
             let aveReview = 0;
             for(let review of reviews){
                 aveReview += review.stars;
@@ -195,13 +196,17 @@ router.get('/', async (req, res, next) => {
 router.get('/current', async (req, res, next) => {
     try {
         if(!req.user){
-            throw new noResourceError("User Not Signed In",404);
+            const error = new Error("User Not Signed In");
+            error.status = 404;
+            throw error;
         }
         
         const currentUser = await req.user.id;
         const checkForSpots = await Spot.findByPk(currentUser);
         if(!checkForSpots){
-            throw new noResourceError("This User Has No Spots", 404);
+            const error = new Error("This User Has No Spots");
+            error.status = 404;
+            throw error;
         }
         const userSpots = await Spot.findAll({
             where: {userId:currentUser},
@@ -250,8 +255,9 @@ router.get('/:spotId', async (req, res, next) => {
         const spotId = req.params.spotId;
         const thisSpot = await Spot.findByPk(spotId);
         if(!thisSpot){
-            const err = new noResourceError("Spot couldn't be found", 404);
-            err.throwThis();
+            const error = new Error("Spot couldn't be found");
+            error.status = 404;
+            throw error;
         }
         
         const spots = await Spot.findAll({where:{id:spotId}, include: [{
@@ -312,7 +318,9 @@ router.get('/:spotId/reviews', async (req, res, next) => {
         const spotId = req.params.spotId;
 
         if (!spotId) {
-            throw new ErrorHandler("Spot couldn't be found", 404);
+            const error = new Error("Spot couldn't be found");
+            error.status = 404;
+            throw error;
         }
         const reviews = await Review.findAll({
             where: {
@@ -350,7 +358,9 @@ router.get('/:spotId/bookings', async (req, res, next) => {
         //const userId = req.user.id;
 
         if(!spotId){
-            throw new ErrorHandler("Spot couldn't be found", 404);
+            const error = new Error("Spot couldn't be found");
+            error.status = 404;
+            throw error;
         }
 
         if(req.user){
@@ -365,7 +375,9 @@ router.get('/:spotId/bookings', async (req, res, next) => {
                 ]
             });
             if(!bookings){
-                throw new ErrorHandler("No Bookings for this SpotId found", 404);
+                const error = new Error("No Bookings for this SpotId found");
+                error.status = 404;
+                throw error;
             }
             return res.json({ Bookings: bookings });
         }else{
@@ -396,7 +408,9 @@ router.get('/:spotId/bookings', async (req, res, next) => {
 router.post('/', validateSpots, async (req, res, next) => {
     try {
         if(!req.user.id){
-            throw new ErrorHandler("User needs to be signed in", 400);
+            const error = new Error("User needs to be signed in");
+            error.status = 400;
+            throw error;
         }
         const userId = await req.user.id;
         const { address, city, state, country, lat, lng, name, description, price } = req.body;
@@ -421,7 +435,9 @@ router.post('/:spotId/images', async (req, res, next) => {
         const { url, preview } = req.body;
 
         if(!routeId){
-            throw new ErrorHandler("Spot couldn't be found", 404);
+            const error = new Error("Spot couldn't be found");
+            error.status = 404;
+            throw error;
         }
 
         const newImage = await SpotImage.create({ spotId: routeId, url, preview });
@@ -441,9 +457,9 @@ router.post('/:spotId/reviews',validateReview, async (req, res, next) => {
         const spot = await Spot.findByPk(spotId)
 
         if(!spot){
-            let noResourceError = new Error("Spot couldn't be found");
-            noResourceError.status = 404;
-            throw noResourceError
+            const error = new Error("Spot couldn't be found");
+            error.status = 404;
+            throw error;
         }
         const userReview = await Review.findOne({
             where: {
@@ -457,7 +473,9 @@ router.post('/:spotId/reviews',validateReview, async (req, res, next) => {
             return res.json(newReview);
 
         }else{
-            throw new ErrorHandler("User already has a review for this spot.");
+            const error = new Error("User already has a review for this spot.");
+            error.status = 400;
+            throw error;
         }
         //const numSpot = Number(spot);
         //console.log(numSpot)
@@ -486,14 +504,18 @@ router.put('/:spotId', validateSpots, async (req, res, next) => {
         const userId = req.user.id;
 
         if(!req.user){
-            throw new ErrorHandler("Spot must belong to the current user", 404);
+            const error = new Error("Spot must belong to the current user");
+            error.status = 404;
+            throw error;
         }
 
         const { address, city, state, country, lat, lng, name, description, price } = req.body;
 
         const spotToUpdate = await Spot.findByPk(spotId);
         if (!spotToUpdate) {
-            throw new ErrorHandler("Spot couldn't be found", 404);
+            const error = new Error("Spot couldn't be found");
+            error.status = 404;
+            throw error;
         } else {
             await spotToUpdate.update({ userId, address, city, state, country, lat, lng, name, description, price })
 
@@ -513,18 +535,22 @@ router.delete('/:spotId', async (req, res, next) => {
         const spotToDelete = await Spot.findByPk(spotId);
 
         if (!spotToDelete) {
-             throw new ErrorHandler("No spot found with provided ID", 404)
+            const error = new Error("Spot couldn't be found");
+            error.status = 404;
+            throw error;
         }
 
-        if(spotToDelete.userId !== userId){
-            throw new ErrorHandler("You are not authorized to delete this booking", 403);
+        if (spotToDelete.userId !== userId) {
+            const error = new Error("You are not authorized to delete this spot");
+            error.status = 403;
+            throw error;
         }
 
         await spotToDelete.destroy();
-        return res.json({ message: "Spot deleted successfully" })
-
+        return res.json({ message: "Spot successfully deleted" });
     } catch (error) {
-        next(error)
+        next(error);
     }
 });
+
 module.exports = router;

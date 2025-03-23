@@ -23,19 +23,4 @@ class ErrorHandler extends Error {
     }
 }
 
-const handleError = (err, req, res, next) => {
-    const statusCode = err.statusCode || 404;
-    const message = err.message || "Internal Server Error";
-    
-    const response = {
-        message: message
-    };
-
-    if (err.errors) {
-        response.errors = err.errors;
-    }
-
-    res.status(statusCode).json(response);
-};
-
-module.exports = { noResourceError, ErrorHandler, handleError };
+module.exports = { noResourceError, ErrorHandler };

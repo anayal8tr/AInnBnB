@@ -1,6 +1,5 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { ErrorHandler } = require('../../utils/errorHandler');
 
 //Utils imports
 const { setTokenCookie, requireAuth } = require('../../utils/auth');
@@ -33,6 +32,12 @@ const validateSignup = [
     handleValidationErrors
 ];
 
+// GET 
+router.get('/', async (req, res) => {
+    const users = await User.findAll();
+    res.json(users);
+    });
+    
 // Sign up
 router.post('/', validateSignup, async (req, res, next) => {
     try {
@@ -46,22 +51,25 @@ router.post('/', validateSignup, async (req, res, next) => {
         if (!password || password.length < 5) errors.password = "Password must be at least 5 characters";
 
         if (Object.keys(errors).length > 0) {
-            throw new ErrorHandler("Bad Request", 400, errors);
+            const error = new Error("Validation error");
+            error.status = 400;
+            error.errors = errors;
+            throw error;
         }
 
         // Check if user exists
         const existingEmail = await User.findOne({ where: { email } });
         if (existingEmail) {
-            throw new ErrorHandler("Email already exists", 500, {
-                email: "User with that email already exists"
-            });
+            const error = new Error("User with that email already exists");
+            error.status = 403;
+            throw error;
         }
 
         const existingUsername = await User.findOne({ where: { username } });
         if (existingUsername) {
-            throw new ErrorHandler("Username already exists", 500, {
-                username: "User with that username already exists"
-            });
+            const error = new Error("User with that username already exists");
+            error.status = 403;
+            throw error;
         }
 
         const hashedPassword = bcrypt.hashSync(password);
@@ -91,7 +99,9 @@ router.get('/current', async (req, res, next) => {
         const userId = req.user.id;
         const user = await User.findByPk(userId);
         if (!user) {
-            throw new ErrorHandler("User not found", 404);
+            const error = new Error("User not found");
+            error.status = 404;
+            throw error;
         }
         return res.json(user);
     } catch (error) {
@@ -106,7 +116,9 @@ router.put('/:userId', async (req, res, next) => {
         const { firstName, lastName, email, username, password } = req.body;
         const user = await User.findByPk(userId);
         if (!user) {
-            throw new ErrorHandler("User not found", 404);
+            const error = new Error("User not found");
+            error.status = 404;
+            throw error;
         }
         await user.update({ firstName, lastName, email, username, password });
         return res.json(user);
@@ -121,7 +133,9 @@ router.delete('/:userId', async (req, res, next) => {
         const userId = req.params.userId;
         const user = await User.findByPk(userId);
         if (!user) {
-            throw new ErrorHandler("User not found", 404);
+            const error = new Error("User not found");
+            error.status = 404;
+            throw error;
         }
         await user.destroy();
         return res.json({ message: "User successfully deleted" });
@@ -129,7 +143,6 @@ router.delete('/:userId', async (req, res, next) => {
         next(error);
     }
 });
-
 
 module.exports = router;
 

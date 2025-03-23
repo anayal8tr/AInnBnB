@@ -13,7 +13,6 @@ const { handleValidationErrors } = require('../../utils/validation');
 
 // Sequelize Imports 
 const { User } = require('../../db/models');
-const { ErrorHandler } = require('../../utils/errorHandler');
 
 const router = express.Router();
 
@@ -34,13 +33,16 @@ const validateLogin = [
 router.post('/', validateLogin, async (req, res, next) => {
     try {
         const { credential, password } = req.body;
-        
+
         const errors = {};
         if (!credential) errors.credential = "Email or username is required";
         if (!password) errors.password = "Password is required";
-        
+
         if (Object.keys(errors).length > 0) {
-            throw new ErrorHandler("Bad Request", 400, errors);
+            const error = new Error("Validation error");
+            error.status = 400;
+            error.errors = errors;
+            throw error;
         }
 
         const user = await User.unscoped().findOne({
@@ -53,7 +55,9 @@ router.post('/', validateLogin, async (req, res, next) => {
         });
 
         if (!user || !bcrypt.compareSync(password, user.hashedPassword.toString())) {
-            throw new ErrorHandler("Invalid credentials", 401);
+            const error = new Error("Invalid credentials");
+            error.status = 401;
+            throw error;
         }
 
         const safeUser = {

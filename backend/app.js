@@ -29,7 +29,11 @@ app.use(express.json()); // Allows us to use json in req/res
 // Security Middleware
 if (!isProduction) {
     // enable cors only in development
-    app.use(cors());
+    app.use(cors({
+        origin: 'http://localhost:5173', // allow requests from this origin
+        methods: ['GET', 'POST', 'PUT', 'DELETE'], // allow these HTTP methods
+        allowedHeaders: ['Content-Type', 'Authorization'], // allow these headers
+    }));
 }
 
 // helmet helps set a variety of headers to better secure your app

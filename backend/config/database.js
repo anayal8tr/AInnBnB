@@ -1,9 +1,6 @@
-// backend/config/database.js
-const config = require('./index');
-
 module.exports = {
   development: {
-    storage: config.dbFile,
+    storage: './db/dev.db',
     dialect: "sqlite",
     seederStorage: "sequelize",
     logQueryParameters: true,
@@ -14,13 +11,8 @@ module.exports = {
     dialect: 'postgres',
     seederStorage: 'sequelize',
     dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
-      }
+      ssl: { require: true, rejectUnauthorized: false }
     },
-    define: {
-      schema: process.env.SCHEMA
-    }
+    define: { schema: process.env.SCHEMA }
   }
 };

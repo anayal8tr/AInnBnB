@@ -1,23 +1,23 @@
 const express = require('express');
 const { ReviewImage, Review } = require('../../db/models');
-const { ErrorHandler } = require('../../utils/errorHandler');
 const { requireAuth } = require('../../utils/auth');
 const router = express.Router();
 
 //DELETE Delete a Review image by its ID
 router.delete('/:reviewImageId', async (req, res, next) => {
-    //const { reviewImageId } = req.params;
     try {
         const reviewImageId = req.params.reviewImageId;
         const reviewImageToDelete = await ReviewImage.findByPk(reviewImageId);
 
-        if(!reviewImageToDelete){
-            throw new ErrorHandler("Review Image couldn't be found", 404);
+        if (!reviewImageToDelete) {
+            const error = new Error("Review Image couldn't be found");
+            error.status = 404;
+            throw error;
         }
 
         await reviewImageToDelete.destroy();
-        return res.json({ message: 'Review Image successfully deleted' });
-    }catch(error){
+        return res.json({ message: "Review Image successfully deleted" });
+    } catch (error) {
         next(error);
     }
 });

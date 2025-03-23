@@ -1,6 +1,5 @@
 //express imports
 const router = require('express').Router();
-const { handleError } = require('../../utils/errorHandler');
 const { restoreUser } = require('../../utils/auth');
 
 // Import all route files
@@ -16,9 +15,9 @@ const spotImagesRouter = require('./spot-images.js');
 router.use(restoreUser);
 
 // Connect all routes
+router.use('/spots', spotsRouter);
 router.use('/session', sessionRouter);
 router.use('/users', usersRouter);
-router.use('/spots', spotsRouter);
 router.use('/reviews', reviewsRouter);
 router.use('/bookings', bookingsRouter);
 router.use('/review-images', reviewImagesRouter);
@@ -30,14 +29,5 @@ router.post('/test', (req, res) => {
     res.json({ requestBody: req.body });
 });
 
-// Authentication error handler
-/*router.use((req, res, next) => {
-    const err = new Error("Authentication required");
-    err.status = 401;
-    next(err);
-});*/
-
-// Error handler
-router.use(handleError);
 
 module.exports = router;
